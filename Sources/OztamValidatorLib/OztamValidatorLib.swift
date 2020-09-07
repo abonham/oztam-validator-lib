@@ -226,7 +226,15 @@ public struct Oztail {
         default: break
         }
     }
+    
+        public init(userName: String, password: String, debug: Bool = false, verbose: Bool = false) {
+    	self.userName = userName
+    	self.password = password
+    	self.debug = debug
+    	self.verbose = verbose
+    }
 }
+
 
 extension Data {
     var prettyPrintedJSONString: NSString? { /// NSString gives us a nice sanitized debugDescription
