@@ -1,6 +1,6 @@
 import XCTest
 
-import oztam_validator_libTests
+import OztamValidatorLibests
 
 var tests = [XCTestCaseEntry]()
 tests += oztam_validator_libTests.allTests()

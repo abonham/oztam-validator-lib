@@ -25,7 +25,7 @@ let package = Package(
             name: "OztamValidatorLib",
             dependencies: []),
         .testTarget(
-            name: "oztam-validator-libTests",
+            name: "OztamValidatorLibTests",
             dependencies: ["OztamValidatorLib"]),
     ]
 )
