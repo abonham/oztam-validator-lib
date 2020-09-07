@@ -3,12 +3,12 @@ import Foundation
 import FoundationNetworking
 #endif
 
-enum URLError: Error {
+public enum URLError: Error {
     case badURL
 }
 
 
-extension Optional where Wrapped: Codable {
+public extension Optional where Wrapped: Codable {
     init?(from decoder: Decoder) throws {
         guard let container = try? decoder.singleValueContainer() else {
             self = .none
@@ -18,18 +18,18 @@ extension Optional where Wrapped: Codable {
     }
 }
 
-struct MeterEvent: Codable {
-    let events: [Event]
-    let secondsViewed: Int
-    let oztamFlags: [String: Bool]?
+public struct MeterEvent: Codable {
+    public let events: [Event]
+    public let secondsViewed: Int
+    public let oztamFlags: [String: Bool]?
 
-    var eventDescription: String {
+    public var eventDescription: String {
         "\(events[0].description)\nprogress: \(secondsViewed)"
     }
 }
 
-struct Event: Codable {
-    enum EventType: String, Codable {
+public struct Event: Codable {
+    public enum EventType: String, Codable {
         case LOAD
         case BEGIN
         case AD_BEGIN
@@ -38,17 +38,17 @@ struct Event: Codable {
         case COMPLETE
     }
 
-    let event: EventType
-    let fromPosition: Int
-    let toPosition: Int
-    let timestamp: Date
+    public let event: EventType
+    public let fromPosition: Int
+    public let toPosition: Int
+    public let timestamp: Date
 
-    var description: String {
+    public var description: String {
         "\(event.rawValue)\nfrom: \(fromPosition)\nto: \(toPosition)\nat: \(timestamp)"
     }
 }
 
-enum EventError: Error {
+public enum EventError: Error {
     case progressTooLong(Int)
     case outOfOrder(Event, Event)
     case timestampsOutOfOrder(Event, Event)
@@ -56,7 +56,7 @@ enum EventError: Error {
     case multipleLoad
     case multipleBegin
 
-    var description: String {
+    public var description: String {
         switch self {
         case .progressTooLong(let time):
             return "Progress event must be 60 seconds or less, time was \(time)"
@@ -76,11 +76,11 @@ Second Event: \(second.description)
     }
 }
 
-enum ValidationError: Error { 
+public enum ValidationError: Error { 
 	case errors([EventError])
 }
 
-struct Oztail {
+public struct Oztail {
 
     let host = "oztam.com.au"
 
@@ -102,7 +102,7 @@ struct Oztail {
         return debug ? "tail" : "stail"
     }
 
-    func fetch(_ sessionId: String) throws -> Result<Bool, Error> {
+    public func fetch(_ sessionId: String) throws -> Result<Bool, Error> {
         let fetchURL = try url(subdomain, sessionId: sessionId)
         let data = try Data(contentsOf: fetchURL)
         if verbose {
