@@ -149,7 +149,7 @@ public struct Oztail {
         print("\u{001B}[1mChecking progress events\u{001B}[0m")
         let progressErrors = validateProgressTimes(events: object)
         if !progressErrors.isEmpty {
-            print("\u{001B}[31mError: some progress events are too long\u{001B}[0m")
+            print("\u{001B}[31mError: some progress events are incorrect\u{001B}[0m")
             print(progressErrors.map(\.eventDescription).joined(separator: "\n\n"))
             hasErrors = true
         } else {
