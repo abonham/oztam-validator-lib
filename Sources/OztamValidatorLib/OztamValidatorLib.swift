@@ -174,11 +174,13 @@ public struct Oztail {
         }
 
 		return Result<Bool, Error>.success(!hasErrors)
-
     }
 
     func validateProgressTimes(events: [MeterEvent]) -> [MeterEvent] {
-        return events.filter { $0.oztamFlags != nil }
+    	var failedEvents = [MeterEvent]()
+		failedEvents += events.filter { $0.events[0].toPosition <  $0.events[0].fromPosition }
+		failedEvents += events.filter { $0.oztamFlags != nil }
+        return failedEvents
     }
 
     func validateAdEvents(events: [MeterEvent]) -> [MeterEvent] {
