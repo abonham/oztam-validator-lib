@@ -81,7 +81,6 @@ public enum ValidationError: Error {
 }
 
 public struct Oztail {
-
     let host = "oztam.com.au"
 
     func url(_ subdomain: String, sessionId: String) throws -> URL {
@@ -100,6 +99,24 @@ public struct Oztail {
 
     var subdomain: String {
         return debug ? "tail" : "stail"
+    }
+
+    public func retrieveSession(_ sessionId: String, debug: Bool = false) throws -> [MeterEvent] {
+        let subdomain = debug ? "tail" : "stail"
+        let fetchURL = try url(subdomain, sessionId: sessionId)
+        let data = try Data(contentsOf: fetchURL)
+
+        let formatter = ISO8601DateFormatter.init()
+        formatter.formatOptions.insert(.withFractionalSeconds)
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom {
+            let string = try $0.singleValueContainer().decode(String.self)
+            return formatter.date(from: string)!
+        }
+        let object = try decoder.decode([MeterEvent].self, from: data)
+
+        return object
     }
 
     public func fetch(_ sessionId: String) throws -> Result<Bool, Error> {
