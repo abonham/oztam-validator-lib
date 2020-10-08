@@ -192,6 +192,16 @@ public struct Oztail {
 		return Result<Bool, Error>.success(!hasErrors)
     }
 
+    func validate(meterEvents events: [MeterEvent]) throws -> Result<Bool, Error> {
+        return Result {
+            var failedEvents = [MeterEvent]()
+            failedEvents += validateProgressTimes(events: events)
+            failedEvents += validateAdEvents(events: events)
+            try validateOneOffEvents(events: events)
+            return !failedEvents.isEmpty
+        }
+    }
+
     func validateProgressTimes(events: [MeterEvent]) -> [MeterEvent] {
     	var failedEvents = [MeterEvent]()
 		failedEvents += events.filter { $0.events[0].toPosition <  $0.events[0].fromPosition }
