@@ -98,11 +98,10 @@ public struct Oztail {
     var verbose: Bool = false
 
     var subdomain: String {
-        return debug ? "tail" : "stail"
+        return debug ? "stail" : "tail"
     }
 
-    public func retrieveSession(_ sessionId: String, debug: Bool = false) throws -> [MeterEvent] {
-        let subdomain = debug ? "tail" : "stail"
+    public func retrieveSession(_ sessionId: String) throws -> [MeterEvent] {
         let fetchURL = try url(subdomain, sessionId: sessionId)
         let data = try Data(contentsOf: fetchURL)
 
