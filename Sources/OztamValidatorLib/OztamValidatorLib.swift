@@ -62,7 +62,7 @@ public enum EventError: Error {
     case multipleBegin
     case noLoad
     case noBegin
-    case .adEventProgressNonZero(Event, Double)
+    case adEventProgressNonZero(Event, Double)
 
     public var description: String {
         switch self {
