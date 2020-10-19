@@ -221,7 +221,7 @@ public struct Oztail {
         let zeroTimeEvents = [Event.EventType.LOAD, Event.EventType.BEGIN, Event.EventType.AD_BEGIN, Event.EventType.AD_COMPLETE]
         let progressEvents = events.compactMap { $0.firstEvent }
             .filter { !zeroTimeEvents.contains($0.event) }
-        failedEvents += progressEvents.filter { $0.progressTotal >= 0 }
+        failedEvents += progressEvents.filter { $0.progressTotal <= 0 }
             .map { EventError.negativeProgress($0, $0.progressTotal) }
         failedEvents += events.filter { $0.oztamFlags != nil }.map { EventError.progressTooLong($0.firstEvent!, $0.firstEvent!.progressTotal)}
         return failedEvents
