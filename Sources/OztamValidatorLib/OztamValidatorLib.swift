@@ -20,7 +20,7 @@ public extension Optional where Wrapped: Codable {
 
 public struct MeterEvent: Codable {
     public let events: [Event]
-    public let secondsViewed: Int
+    public let secondsViewed: Double
     public let oztamFlags: [String: Bool]?
 
     public var eventDescription: String {
@@ -39,8 +39,8 @@ public struct Event: Codable {
     }
 
     public let event: EventType
-    public let fromPosition: Int
-    public let toPosition: Int
+    public let fromPosition: Double
+    public let toPosition: Double
     public let timestamp: Date
 
     public var description: String {
@@ -49,7 +49,7 @@ public struct Event: Codable {
 }
 
 public enum EventError: Error {
-    case progressTooLong(Int)
+    case progressTooLong(Double)
     case outOfOrder(Event, Event)
     case timestampsOutOfOrder(Event, Event)
     case noEvents
