@@ -66,10 +66,10 @@ public enum EventError: Error {
 
     public var description: String {
         switch self {
-        case .progressTooLong(_, let time):
-            return "Progress event must be 60 seconds or less, time was \(time)"
-        case .negativeProgress(_, let time):
-            return "Progress must be positive, time was \(time)"
+        case .progressTooLong(let event, let time):
+            return "Progress event must be 60 seconds or less, time was \(time) for \(event.event.rawValue) event at \(event.timestamp)"
+        case .negativeProgress(let event, let time):
+            return "Progress must be positive, time was \(time) for \(event.event.rawValue) event at \(event.timestamp)"
         case let .outOfOrder(first, second):
             return """
 \u{001B}[31m\(first.event.rawValue) event must not be immediately followed by a \(second.event.rawValue) event.\u{001B}[0m
@@ -84,7 +84,7 @@ Second Event: \(second.description)
         case .multipleBegin: return "There must olny be one begin event per session"
         case .noLoad: return "No load event"
         case .noBegin: return "No begin event"
-        case .adEventProgressNonZero(_, let time): return "Ad progress must be 0"
+        case .adEventProgressNonZero(let event, let time): return "Ad progress must be 0, time was \(time) for \(event.event.rawValue) event at \(event.timestamp)"
         }
     }
 }
