@@ -23,6 +23,8 @@ public struct MeterEvent: Codable {
     public let secondsViewed: Double
     public let oztamFlags: [String: Bool]?
 
+    public var firstEvent: Event? { events.first }
+
     public var eventDescription: String {
         "\(events[0].description)\nprogress: \(secondsViewed)"
     }
@@ -43,23 +45,31 @@ public struct Event: Codable {
     public let toPosition: Double
     public let timestamp: Date
 
+    public var progressTotal: Double { toPosition - fromPosition }
+
     public var description: String {
         "\(event.rawValue)\nfrom: \(fromPosition)\nto: \(toPosition)\nat: \(timestamp)"
     }
 }
 
 public enum EventError: Error {
-    case progressTooLong(Double)
+    case progressTooLong(Event, Double)
+    case negativeProgress(Event, Double)
     case outOfOrder(Event, Event)
     case timestampsOutOfOrder(Event, Event)
     case noEvents
     case multipleLoad
     case multipleBegin
+    case noLoad
+    case noBegin
+    case .adEventProgressNonZero(Event, Double)
 
     public var description: String {
         switch self {
-        case .progressTooLong(let time):
+        case .progressTooLong(_, let time):
             return "Progress event must be 60 seconds or less, time was \(time)"
+        case .negativeProgress(_, let time):
+            return "Progress must be positive, time was \(time)"
         case let .outOfOrder(first, second):
             return """
 \u{001B}[31m\(first.event.rawValue) event must not be immediately followed by a \(second.event.rawValue) event.\u{001B}[0m
@@ -72,6 +82,9 @@ Second Event: \(second.description)
         case .noEvents: return "No oztail events"
         case .multipleLoad: return "There must olny be one load event per session"
         case .multipleBegin: return "There must olny be one begin event per session"
+        case .noLoad: return "No load event"
+        case .noBegin: return "No begin event"
+        case .adEventProgressNonZero(_, let time): return "Ad progress must be 0"
         }
     }
 }
@@ -115,25 +128,12 @@ public struct Oztail {
         }
         let object = try decoder.decode([MeterEvent].self, from: data)
 
+        guard !object.isEmpty else { throw EventError.noEvents }
         return object
     }
 
     public func fetch(_ sessionId: String) throws -> Result<Bool, Error> {
-        let fetchURL = try url(subdomain, sessionId: sessionId)
-        let data = try Data(contentsOf: fetchURL)
-        if verbose {
-            print(data.prettyPrintedJSONString ?? "No data")
-        }
-
-        let formatter = ISO8601DateFormatter.init()
-        formatter.formatOptions.insert(.withFractionalSeconds)
-
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .custom {
-            let string = try $0.singleValueContainer().decode(String.self)
-            return formatter.date(from: string)!
-        }
-        let object = try decoder.decode([MeterEvent].self, from: data)
+        let object = try retrieveSession(sessionId)
         var hasErrors = false
 
         print("\u{001B}[1mChecking load and begin events\u{001B}[0m")
@@ -200,6 +200,55 @@ public struct Oztail {
             try validateOneOffEvents(events: events)
             return !failedEvents.isEmpty
         }
+    }
+
+    public func startingEventsErrors(for events: [MeterEvent])  -> [EventError] {
+        var errors = [EventError]()
+
+        let allEvents = events.map { $0.events.first!.event }
+        let loadEvents = allEvents.filter({ $0 == .LOAD })
+        if loadEvents.count > 1 { errors.append(.multipleLoad) }
+        if loadEvents.isEmpty { errors.append(.noLoad) }
+        let beginEvents = allEvents.filter({ $0 == .BEGIN })
+        if beginEvents.count > 1 { errors.append(.multipleBegin) }
+        if beginEvents.isEmpty { errors.append(.noBegin) }
+
+        return errors
+    }
+
+    public func progressTimeErrors(for events: [MeterEvent]) -> [EventError] {
+        var failedEvents = [EventError]()
+        failedEvents += events.filter { $0.firstEvent!.progressTotal >= 0 }.map { EventError.negativeProgress($0.firstEvent!, $0.firstEvent!.progressTotal) }
+        failedEvents += events.filter { $0.oztamFlags != nil }.map { EventError.progressTooLong($0.firstEvent!, $0.firstEvent!.progressTotal)}
+        return failedEvents
+    }
+
+    public func adEventProgressErrors(for events: [MeterEvent]) -> [EventError] {
+        let adTypes = [Event.EventType.AD_BEGIN, Event.EventType.AD_COMPLETE]
+        let adEvents = events.compactMap { return $0.firstEvent }
+            .filter { adTypes.contains($0.event) }
+        return adEvents.filter { $0.fromPosition != $0.toPosition }
+            .map { EventError.adEventProgressNonZero($0, $0.progressTotal)}
+    }
+
+    public func validationErrors(for events: [MeterEvent]) -> [EventError] {
+        var errors = [EventError]()
+
+        errors += startingEventsErrors(for: events)
+        errors += progressTimeErrors(for: events)
+        errors += adEventProgressErrors(for: events)
+
+        for eventPair in sequence(state: events.makeIterator(), next: { it in
+            it.next().map { return ($0, it.map { $0 }.first) }
+        }) {
+            do {
+                try validateEventPair(eventPair)
+            } catch {
+                errors.append(error as! EventError)
+            }
+        }
+
+        return errors
     }
 
     func validateProgressTimes(events: [MeterEvent]) -> [MeterEvent] {
