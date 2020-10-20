@@ -72,7 +72,7 @@ public enum EventError: Error {
             return "Progress must be positive, time was \(time) for \(event.event.rawValue) event at \(event.timestamp)"
         case let .outOfOrder(first, second):
             return """
-\u{001B}[31m\(first.event.rawValue) event must not be immediately followed by a \(second.event.rawValue) event.\u{001B}[0m
+\(first.event.rawValue) event must not be immediately followed by a \(second.event.rawValue) event.
 First Event: \(first.description)
 
 Second Event: \(second.description)
