@@ -102,6 +102,7 @@ public struct Oztail {
         let query = URLQueryItem(name: "sessionId", value: sessionId)
         components.queryItems = [query]
         guard let url = components.url else { throw URLError.badURL }
+        
         return url
     }
 
@@ -218,7 +219,12 @@ public struct Oztail {
 
     public func progressTimeErrors(for events: [MeterEvent]) -> [EventError] {
         var failedEvents = [EventError]()
-        let zeroTimeEvents = [Event.EventType.LOAD, Event.EventType.BEGIN, Event.EventType.AD_BEGIN, Event.EventType.AD_COMPLETE]
+        let zeroTimeEvents = [Event.EventType.LOAD,
+                              Event.EventType.BEGIN,
+                              Event.EventType.AD_BEGIN,
+                              Event.EventType.AD_COMPLETE,
+                              Event.EventType.COMPLETE
+        ]
         let progressEvents = events.compactMap { $0.firstEvent }
             .filter { !zeroTimeEvents.contains($0.event) }
         failedEvents += progressEvents.filter { $0.progressTotal <= 0 }
